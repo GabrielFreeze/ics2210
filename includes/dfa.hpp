@@ -3,6 +3,8 @@
 #include <iostream>
 #include <cstdint>
 
+using namespace std;
+
 /*An empty transition from state X to state Y will be represented as 0 (00 in binary) in the adjacency matrix.
 A transition for the symbol 'a' from state X to state Y will be represented as TR_A (01 in binary) in the adjacency matrix.
 A transition for the symbol 'b' from state X to state Y will be represented as TR_B (10 in binary) in the adjacency matrix.
@@ -16,8 +18,9 @@ A transition for the symbol 'a' and the symbol 'b' from state X to state Y will 
 class Dfa {
     public:
         
-        uint8_t size;
-        uint8_t id[64] = {'A','B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+        int size;
+        int start;
+        char id[64] = {'A','B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
                           'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
                           '0','1','2','3','4','5','6','7','8','9',
                           '!','?'};
@@ -25,11 +28,13 @@ class Dfa {
         Dfa();
         void seed();
         void print();
-        uint8_t findShortestPath(uint8_t start, uint8_t end);
-        std::pair<uint8_t, uint8_t> getChildren(uint8_t state);
+
+        int getShortestPath(int start, int end);
+        pair<int, int> getChildren(int state);
+        int getDepth();
+        
     
     private:
-        std::vector<std::vector<uint8_t>> mat;
-        std::vector<bool> final;
-        uint8_t start;
+        vector<vector<int>> mat;
+        vector<bool> final;
 };

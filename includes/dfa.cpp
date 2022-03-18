@@ -2,24 +2,60 @@
 #include <iostream>
 #include <time.h>
 #include <queue>
+#include <set>
+#include <algorithm>
+#include <cstdio>
+#include <cstring>
 
 using namespace std;
+
+#define TEST 1
 
 
 Dfa::Dfa() {
     cout << "Class Created\n";
     srand(time(NULL));                             //Seed random number generator with time.
-    size = rand() % (MAX_SIZE-MIN_SIZE) + MIN_SIZE;  //Generate random number between 16 and 64.
 
-    mat.resize(size, std::vector<uint8_t>(size)); //Set mat to size x size.
+    if (TEST) {
+        size = 6;
+    } else {
+        size = rand() % (MAX_SIZE-MIN_SIZE) + MIN_SIZE;  //Generate random number between 16 and 64.
+    }
+
+    mat.resize(size, std::vector<int>(size)); //Set mat to size x size.
 }
 
 void Dfa::seed() {
+
+    if (TEST) {
+        // mat = {
+        //  //TO:       A B C D E F
+        //  /*FROM: A*/{0,0,1,0,2,0},
+        //  /*FROM: B*/{3,0,0,0,0,0},
+        //  /*FROM: C*/{0,2,0,0,0,1},
+        //  /*FROM: D*/{0,0,0,2,1,0},
+        //  /*FROM: E*/{1,0,0,0,0,2},
+        //  /*FROM: F*/{1,0,2,0,0,0}};
+        
     
+        mat = {
+         //TO:       A B C D E F
+         /*FROM: A*/{0,1,0,0,0,2},
+         /*FROM: B*/{0,0,0,0,2,1},
+         /*FROM: C*/{2,0,1,0,0,0},
+         /*FROM: D*/{0,0,0,1,2,0},
+         /*FROM: E*/{0,0,0,0,0,3},
+         /*FROM: F*/{0,0,0,0,1,2}};
+        
+
+        start = 0; //A
+        final = {0,0,1,0,1,0}; //C & E
+
+    } else {
         //Give all states 2 outgoing transitions (a,b) to any other state.
         for (int i = 0; i < size; i++) {
             //Set 'a' transition from node i to a random node j
-            uint8_t j = rand() % size;
+            int j = rand() % size;
             mat[i][j] |= TR_A;
             
             //Set 'b' transition from node i to a random node j
@@ -32,8 +68,11 @@ void Dfa::seed() {
 
         //Flip a coin to decide if a state is a final state.
         for (int i = 0; i < size; i++) {
-            final.push_back(rand()%2);
-        }
+                final.push_back(rand()%2);
+            }
+    }
+
+
         
 }
 
@@ -66,10 +105,10 @@ void Dfa::print() {
     cout << "\nStarting State: " << id[start] << "\n";
 }
 
-pair<uint8_t, uint8_t> Dfa::getChildren(uint8_t state) {
+pair<int, int> Dfa::getChildren(int state) {
     
-    uint8_t first = -1;
-    uint8_t second = -1;
+    int first = -1;
+    int second = -1;
 
     for (int i = 0; i < size; i++) {
         //If the first bit is 1 then there is an 'a' transition from 'state' to state i.
@@ -81,34 +120,104 @@ pair<uint8_t, uint8_t> Dfa::getChildren(uint8_t state) {
             second = i;
         
         //Both 'a' and 'b' transitions must have been encountered in order to break from the loop.
-        if (first | second != -1)
+        if ((first | second) != -1)
             break;
     }
 
     return make_pair(first,second);
 }
 
-uint8_t Dfa::findShortestPath(uint8_t start, uint8_t end) {
+int Dfa::getShortestPath(int start, int end) {
 
-    queue<uint8_t> q;
-    pair<uint8_t, uint8_t> p = make_pair(-1,-1);
-    uint8_t i = 0;
+    queue<int> q;   //Queue
+    vector<int> v; //Visited vector
+    
+    pair<int, int> p = make_pair(-1,-1);
+    int depth = 0;
 
     //Expand start
     q.push(start);
+    v.push_back(start);
 
-    //Place children in queue
+    //Repeat until one of the children expanded is the end node.
     while (p.first != end && p.second != end) {
+        
+        //Expand the first element in the queue.
         p = getChildren(q.front());
+
+        //Remove that element from queue.
         q.pop();
 
-        q.push(p.first);
-        q.push(p.second);
+        //Place that elements children in the queue, provided they have not been encountered.
+        if (!count(v.begin(), v.end(), p.first)) {
+            q.push(p.first);
+        }
+
+        if (!count(v.begin(), v.end(), p.second)) {
+            q.push(p.second);
+        }
         
-        i++;
+        //Increment the depth.
+        depth++;
     }
     
-    return i;
+    return depth;
 }
 
+int Dfa::getDepth() {
+    
+    //Queue to perform BFS with.
+    queue<int> q;
+
+    //Pair to store children of node.
+    pair<int, int> p;
+
+    //An array of depths for every state
+    int depth[size] = {};
+
+    /*Marker is a dummy element. It is popped and re-queued into the queue every time it is encountered.
+    It is used to keep track of the depth.*/
+    const int MARKER = -1;
+    int current_depth = 1;
+
+    //Initalise all depths to -1 except for the first one which will be 0.
+    memset(depth+1, -1, sizeof(int)*(size-1));
+
+    //Push starting state and MARKER into queue.
+    q.push(start); q.push(MARKER);
+
+    //Repeat until the queue is 'empty' (all traversable nodes have been reached)
+    while (q.size() != 1 || q.front() != MARKER) {
+        
+        //Increment depth if MARKER is encountered.
+        if (q.front() == MARKER) {
+            q.pop();
+            q.push(MARKER);
+            current_depth++;
+        }
+
+        //Expand the first element in the queue.
+        p = getChildren(q.front());
+        
+        //Remove that element from queue.
+        q.pop();
+
+        //Place that element's children in the queue and tally their depth, provided they have not been encountered yet.
+        if (depth[p.first] == -1) {
+            q.push(p.first);
+            depth[p.first] = current_depth;             
+        }
+
+        if (depth[p.second] == -1) {
+            q.push(p.second);
+            depth[p.second] = current_depth; 
+        }
+    }
+
+
+    // for (int i = 0; i < size; i++)
+    //     cout << depth[i] << '\n';
+
+    return current_depth-1;
+}
 
