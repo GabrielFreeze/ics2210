@@ -5,14 +5,6 @@
 
 using namespace std;
 
-/*An empty transition from state X to state Y will be represented as 0 (00 in binary) in the adjacency matrix.
-A transition for the symbol 'a' from state X to state Y will be represented as TR_A (01 in binary) in the adjacency matrix.
-A transition for the symbol 'b' from state X to state Y will be represented as TR_B (10 in binary) in the adjacency matrix.
-A transition for the symbol 'a' and the symbol 'b' from state X to state Y will be represented as TR_A | TR_B (11 in binary) in the adjacency matrix.*/
-#define TR_A 1
-#define TR_B 2
-#define TR_AB (TR_A | TR_B)
-
 #define MAX_SIZE 8
 #define MIN_SIZE 3
 class Dfa {

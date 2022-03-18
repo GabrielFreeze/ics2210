@@ -9,11 +9,10 @@
 
 using namespace std;
 
-#define TEST 1
+#define TEST 0
 
 
 Dfa::Dfa() {
-    cout << "Class Created\n";
     srand(time(NULL));                             //Seed random number generator with time.
 
     if (TEST) {
@@ -22,31 +21,18 @@ Dfa::Dfa() {
         size = rand() % (MAX_SIZE-MIN_SIZE) + MIN_SIZE;  //Generate random number between 16 and 64.
     }
 
-    mat.resize(size, std::vector<int>(size)); //Set mat to size x size.
+    mat.resize(2, std::vector<int>(size)); //Set mat to 2 x size.
 }
 
 void Dfa::seed() {
 
     if (TEST) {
-        // mat = {
-        //  //TO:       A B C D E F
-        //  /*FROM: A*/{0,0,1,0,2,0},
-        //  /*FROM: B*/{3,0,0,0,0,0},
-        //  /*FROM: C*/{0,2,0,0,0,1},
-        //  /*FROM: D*/{0,0,0,2,1,0},
-        //  /*FROM: E*/{1,0,0,0,0,2},
-        //  /*FROM: F*/{1,0,2,0,0,0}};
-        
     
         mat = {
-         //TO:       A B C D E F
-         /*FROM: A*/{0,1,0,0,0,2},
-         /*FROM: B*/{0,0,0,0,2,1},
-         /*FROM: C*/{2,0,1,0,0,0},
-         /*FROM: D*/{0,0,0,1,2,0},
-         /*FROM: E*/{0,0,0,0,0,3},
-         /*FROM: F*/{0,0,0,0,1,2}};
-        
+         //NODE:A B C D E F
+         /*a:*/{1,5,2,3,5,4},
+         /*b:*/{5,4,0,4,5,5}};
+         //INDX:0 1 2 3 4 5
 
         start = 0; //A
         final = {0,0,1,0,1,0}; //C & E
@@ -56,11 +42,11 @@ void Dfa::seed() {
         for (int i = 0; i < size; i++) {
             //Set 'a' transition from node i to a random node j
             int j = rand() % size;
-            mat[i][j] |= TR_A;
+            mat[0][i] = j;
             
             //Set 'b' transition from node i to a random node j
             j = rand() % size;
-            mat[i][j] |= TR_B;
+            mat[1][i] = j;
         }
 
         //Choose a random start state
@@ -70,61 +56,26 @@ void Dfa::seed() {
         for (int i = 0; i < size; i++) {
                 final.push_back(rand()%2);
             }
-    }
-
-
-        
+    }     
 }
 
+
 void Dfa::print() {
-
-
-    string map[4] = {"__","a_","_b","ab"};
-
-    cout << "\nFROM:" << " ";
-    for(int i = 0; i < size; i++) {
-        if (final[i])
-            cout << "[" << id[i] << "] ";
-        else 
-            cout << " " << id[i] << "  ";
-    }
-    
-    cout << "\nTO:";
+    cout << "DFA |\ta\tb\n----+------------\n";
 
     for (int i = 0; i < size; i++) {
-        cout << '\n';
         
-        if (final[i])
-            cout << "[" << id[i] << "]    ";
-        else 
-            cout << " " << id[i] << "     ";
-        for (int j = 0; j < size; j++) {
-            cout << map[mat[j][i]] << "  ";
+        if (final[i]) {
+            cout << '[' << id[i] <<"] |\t";
+        } else {
+            cout << ' ' << id[i] <<"  |\t";
         }
+        cout << id[mat[0][i]] << "\t" << id[mat[1][i]] << "\n";
     }
-    cout << "\nStarting State: " << id[start] << "\n";
 }
 
 pair<int, int> Dfa::getChildren(int state) {
-    
-    int first = -1;
-    int second = -1;
-
-    for (int i = 0; i < size; i++) {
-        //If the first bit is 1 then there is an 'a' transition from 'state' to state i.
-        if (mat[state][i] & TR_A)
-            first = i;
-
-        //If the second bit is 1 then there is an 'b' transition from 'state' to state i.
-        if (mat[state][i] & TR_B)
-            second = i;
-        
-        //Both 'a' and 'b' transitions must have been encountered in order to break from the loop.
-        if ((first | second) != -1)
-            break;
-    }
-
-    return make_pair(first,second);
+    return make_pair(mat[0][state],mat[1][state]);
 }
 
 int Dfa::getShortestPath(int start, int end) {
