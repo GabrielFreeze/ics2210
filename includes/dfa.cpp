@@ -9,7 +9,7 @@
 
 using namespace std;
 
-#define TEST 0
+#define TEST 1
 
 
 Dfa::Dfa() {
@@ -21,7 +21,12 @@ Dfa::Dfa() {
         size = rand() % (MAX_SIZE-MIN_SIZE) + MIN_SIZE;  //Generate random number between 16 and 64.
     }
 
-    mat.resize(2, std::vector<int>(size)); //Set mat to 2 x size.
+    mat.resize(2, vector<int>(size)); //Set mat to 2 x size.
+}
+
+void Dfa::setMat(vector<vector<int>>& new_mat) {
+    mat = new_mat;
+    size = mat[0].size();
 }
 
 void Dfa::seed() {
@@ -33,6 +38,12 @@ void Dfa::seed() {
          /*a:*/{1,5,2,3,5,4},
          /*b:*/{5,4,0,4,5,5}};
          //INDX:0 1 2 3 4 5
+
+        // mat = {
+        //  //NODE:A B C D E F
+        //  /*a:*/{1,1,1,4,2,4},
+        //  /*b:*/{5,5,5,5,3,5}};
+        //  //INDX:0 1 2 3 4 5
 
         start = 0; //A
         final = {0,0,1,0,1,0}; //C & E
@@ -115,6 +126,24 @@ int Dfa::getShortestPath(int start, int end) {
     return depth;
 }
 
+
+bool Dfa::isEqual(vector<vector<int>> x, vector<vector<int>> y) {  
+
+
+    cout << x.size() << "\n";
+    cout << y.size() << "\n";
+
+    if (x.size() != y.size())
+        return false;
+
+    for (int i = 0; i < x.size(); i++) {
+        if (x[i] != y[i])
+            return false;
+    }
+
+    return true;
+}
+
 int Dfa::getDepth() {
     
     //Queue to perform BFS with.
@@ -170,5 +199,153 @@ int Dfa::getDepth() {
     //     cout << depth[i] << '\n';
 
     return current_depth-1;
+}
+
+//HopCroft's Minimisation Algorithm
+void Dfa::minimise() {
+
+    vector<vector<int>> npart = {{},{}}; //Next Partitions.
+    vector<vector<int>> ppart = {};      //Previous Partitions.
+    int ipart[size];                     //The partition every state belonged to in ppart.
+
+    int s1,s2;
+    pair<int,int> s1Child, s2Child;
+    bool partioned = false;
+    
+    //Seperate accepting and non-accepting states.
+    for (int i = 0; i < size; i++) {
+        npart[final[i]].push_back(i);
+        ipart[i] = final[i]; //Mark the partions the states are in.
+    }
+
+    /*Attempt to perform the first match
+    Choose the first 2 states in the first partion (the non-accepting states).*/
+    s1 = npart[0][0];
+    s2 = npart[0][1];
+
+    s1Child = getChildren(s1);
+    s2Child = getChildren(s2);
+
+    //In which partition does s1 & s2 belong to?
+    //For every transition x ∈ {a,b}: t(x,s1) & t(x,s2), must either be the same, or belong in the same partition in ppart.
+    if ((s1Child.first  == s2Child.first  || ipart[s1Child.first]  == ipart[s2Child.first] ) &&
+        (s1Child.second == s2Child.second || ipart[s1Child.second] == ipart[s2Child.second])) {
+            
+        //s1 & s2 belong in the same partition.
+        npart.push_back({s1,s2});
+    } else {
+        //s1 & s2 belong in different partitions.
+        npart.push_back({s1}); npart.push_back({s2});
+    }       
+
+    do {
+
+        ppart = npart; //Previous Partions become Now Partitions.
+        npart.clear(); //Now Partions are reset.
+
+        //For every partition i in ppart.
+        for (int i = 0; i < ppart.size(); i++) {
+            /*Match every state in ppart[i] with every possible partition in npart. 
+            If no partition in npart accepts the state, then create a new one for it.*/
+
+            //For every state j in ppart[i]
+            for (int j = 0; j < ppart[i].size(); j++) {
+                s1 = ppart[i][j];
+                partioned = false; //Checks wether s1 has been added to a partion.
+
+                //For every possible partition in npart, attempt to add s1 to it. 
+                for (int k = 0; k < npart.size(); k++) {
+
+                    /*Choose the first element in npart[k]. This is beacause if s1 matches with some element in npart[k].
+                    Then it will match with all elements in npart[k].
+                    Similairly, if s1 fails to match with an element in npart[k], then it will not match with the rest.
+                    Choosing the first element is always guaranteed, as a partiton has at least 1 element.*/
+                    s2 = npart[k][0]; 
+
+                    s1Child = getChildren(s1);
+                    s2Child = getChildren(s2);
+
+                    //Does s2 belong in the same partition as s1?
+                    if ((s1Child.first  == s2Child.first  || ipart[s1Child.first]  == ipart[s2Child.first] ) &&
+                        (s1Child.second == s2Child.second || ipart[s1Child.second] == ipart[s2Child.second])) {
+                            
+                        //s1 & s2 belong in the same partition.
+                        npart[k].push_back(s1); //Add s1 in the same partition as s2.
+                        partioned = true;
+
+                        /*Break from the loop:
+                        s1 has been added to a partition and hence we do not need to check the other partitions.*/
+                        break; 
+                    }
+                }
+
+                //If s1 hasn't been added to a pre-existing partition, create a new one for it.
+                if (!partioned) {
+                    npart.push_back({s1});
+                    partioned = false;
+                }
+            }      
+        }
+        
+        //Update ipart to reference npart.
+        for (int i = 0; i < npart.size(); i++) {
+            for (int j = 0; j < npart[i].size(); j++) {
+                ipart[npart[i][j]] = i;
+            }
+        }
+
+    } while (!isEqual(npart,ppart)); //Keep repeating until the algorithm converges.
+    
+
+    
+
+    //The DFA remained exactly the same.
+    if (npart.size() == size)
+        return;
+
+    //Initalise placeholder variables.
+    vector<vector<int>> new_mat(2, vector<int>(npart.size()));
+    int new_final[npart.size()];
+
+    /*Find which partions the original final states where placed in,
+    and make the element at that index in new_final true.*/
+    for (int i = 0; i < size; i++) {
+        new_final[ipart[i]] = final[i];
+    }
+
+
+    /*Create the new transitions. For every partition in npart,
+    consult the original transition of any state within that partition
+    to get the new transitions.*/
+
+    for (int i = 0; i < npart.size(); i++) {
+        //Get the first state witin npart[i]
+        s1 = npart[i][0];
+        
+        s1Child = getChildren(s1);
+
+        //What is the partition that the 'a' child belongs to?
+        new_mat[0][i] = ipart[s1Child.first];
+
+        //What is the partition that the 'b' child belongs to?
+        new_mat[1][i] = ipart[s1Child.second];
+    }
+    
+    
+    //Update underlying datastructure.
+    setMat(new_mat);
+
+    /*The partition containing the original starting state,
+    will be the new starting state.*/
+    start = ipart[start];
+    
+    final.resize(npart.size()); //Update size of final vector.
+
+    //Copy over values.
+    for (int i = 0; i < npart.size(); i++) {
+        final[i] = new_final[i];
+    }
+
+    return;
 }
 

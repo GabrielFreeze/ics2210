@@ -24,9 +24,15 @@ class Dfa {
         int getShortestPath(int start, int end);
         pair<int, int> getChildren(int state);
         int getDepth();
+        void minimise();
+        void setMat(vector<vector<int>>& new_mat);
+        
         
     
     private:
+
+        bool isEqual(vector<vector<int>> x, vector<vector<int>> y);
+
         vector<vector<int>> mat;
         vector<bool> final;
 };

@@ -6,6 +6,7 @@ int main() {
     
     dfa.seed();
     dfa.print(); 
-    cout << dfa.getDepth() << '\n';
-    
+
+    dfa.minimise();
+    dfa.print(); 
 }
