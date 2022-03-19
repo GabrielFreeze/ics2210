@@ -24,7 +24,7 @@ class Dfa {
         int getShortestPath(int start, int end);
         pair<int, int> getChildren(int state);
         int getDepth();
-        void minimise();
+        void minimise(bool print = false);
         void setMat(vector<vector<int>>& new_mat);
         
         

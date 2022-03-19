@@ -7,6 +7,6 @@ int main() {
     dfa.seed();
     dfa.print(); 
 
-    dfa.minimise();
+    dfa.minimise(true);
     dfa.print(); 
 }
