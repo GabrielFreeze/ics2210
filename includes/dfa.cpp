@@ -83,6 +83,7 @@ void Dfa::print() {
         }
         cout << id[mat[0][i]] << "\t" << id[mat[1][i]] << "\n";
     }
+    cout << "\n";
 }
 
 pair<int, int> Dfa::getChildren(int state) {
@@ -128,11 +129,6 @@ int Dfa::getShortestPath(int start, int end) {
 
 
 bool Dfa::isEqual(vector<vector<int>> x, vector<vector<int>> y) {  
-
-
-    cout << x.size() << "\n";
-    cout << y.size() << "\n";
-
     if (x.size() != y.size())
         return false;
 
@@ -203,7 +199,7 @@ int Dfa::getDepth() {
 
 //HopCroft's Minimisation Algorithm
 void Dfa::minimise() {
-
+    
     vector<vector<int>> npart = {{},{}}; //Next Partitions.
     vector<vector<int>> ppart = {};      //Previous Partitions.
     int ipart[size];                     //The partition every state belonged to in ppart.
