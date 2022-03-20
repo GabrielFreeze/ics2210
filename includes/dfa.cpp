@@ -10,7 +10,7 @@
 
 using namespace std;
 
-#define TEST 1
+#define TEST 0
 
 //Used to find SCCs.
 stack<int> stk;

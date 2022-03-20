@@ -6,8 +6,8 @@
 
 using namespace std;
 
-#define MAX_SIZE 8
-#define MIN_SIZE 3
+#define MAX_SIZE 64
+#define MIN_SIZE 16
 class Dfa {
     public:
         

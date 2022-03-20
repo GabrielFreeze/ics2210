@@ -8,14 +8,12 @@ int main() {
     
     //Creates a random DFA.
     dfa.seed();
-    dfa.print();
 
     cout << "Number of States in A: " << dfa.size << "\n";
     cout << "Depth of A: " << dfa.getDepth() << "\n\n";
     
     //Minimise DFA using Hopcroft's Algorithm
-    dfa.minimise(true);
-    dfa.print();
+    dfa.minimise();
 
     cout << "Number of States in M: " << dfa.size << "\n";
     cout << "Depth of M: " << dfa.getDepth() << "\n\n";
@@ -29,12 +27,12 @@ int main() {
     for (auto w : v) largest_scc = max(largest_scc, w.size()); 
 
     //Get size of smallest SCC.
-    for (auto w : v) smallest_scc = max(smallest_scc, w.size()); 
+    for (auto w : v) smallest_scc = min(smallest_scc, w.size()); 
 
 
     cout << "Number of Strongly Connected Components in M: " << v.size() << "\n";
-    cout << "Size of Largest SCC in M: " << v.size() << "\n";
-    cout << "Size of Smallest SCC in M: " << v.size() << "\n";
+    cout << "Size of Largest SCC in M: " << largest_scc << "\n";
+    cout << "Size of Smallest SCC in M: " << smallest_scc << "\n";
 
 
 
