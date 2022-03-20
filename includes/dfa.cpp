@@ -6,10 +6,19 @@
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
+#include <stack>
 
 using namespace std;
 
 #define TEST 1
+
+//Used to find SCCs.
+stack<int> stk;
+int current_order;
+vector<int> order;
+vector<int> low_link;
+vector<bool> in_stack;
+vector<vector<int>> scc;
 
 
 Dfa::Dfa() {
@@ -32,18 +41,24 @@ void Dfa::setMat(vector<vector<int>>& new_mat) {
 void Dfa::seed() {
 
     if (TEST) {
-    
+        
+        mat = {
+         //NODE:A B C D E F
+         /*a:*/{1,2,0,3,3,4},
+         /*b:*/{5,2,5,3,5,4}};
+         //INDX:0 1 2 3 4 5
+
         // mat = {
         //  //NODE:A B C D E F
         //  /*a:*/{1,5,2,3,5,4},
         //  /*b:*/{5,4,0,4,5,5}};
         //  //INDX:0 1 2 3 4 5
 
-        mat = {
-         //NODE:A B C D E F
-         /*a:*/{1,1,1,4,2,4},
-         /*b:*/{5,5,5,5,3,5}};
-         //INDX:0 1 2 3 4 5
+        // mat = {
+        //  //NODE:A B C D E F
+        //  /*a:*/{1,1,1,4,2,4},
+        //  /*b:*/{5,5,5,5,3,5}};
+        //  //INDX:0 1 2 3 4 5
 
         start = 0; //A
         final = {0,0,1,0,1,0}; //C & E
@@ -296,7 +311,8 @@ void Dfa::minimise(bool print) {
                 }
             }      
         }
-
+        
+        //Print k-Equivalence Partions.
         if (print) {
             cout << eqv << "-Equivalence:\n";
             for (int i = 0; i < ppart.size(); i++) {
@@ -309,6 +325,7 @@ void Dfa::minimise(bool print) {
             }
             cout << "\n";
         }
+        
         //Update ipart to reference npart.
         for (int i = 0; i < npart.size(); i++) {
             for (int j = 0; j < npart[i].size(); j++) {
@@ -320,11 +337,9 @@ void Dfa::minimise(bool print) {
         eqv ++;
     } while (!isEqual(npart,ppart)); //Keep repeating until the algorithm converges.
     
-    //The DFA remained exactly the same.
-    if (npart.size() == size)
-        return;
-
+    //Print k-Equivalence Partions.
     if (print) {
+
         cout << eqv << "-Equivalence:\n";
         for (int i = 0; i < npart.size(); i++) {
             
@@ -337,8 +352,9 @@ void Dfa::minimise(bool print) {
         cout << "\n";
     }
 
-
-
+    //The DFA remained exactly the same.
+    if (npart.size() == size)
+        return;
 
     //Initalise placeholder variables.
     vector<vector<int>> new_mat(2, vector<int>(npart.size()));
@@ -376,3 +392,133 @@ void Dfa::minimise(bool print) {
     return;
 }
 
+vector<vector<int>> Dfa::getScc() {
+
+    //Holds the order in which states are traversed.
+    order.clear(); 
+    order.resize(size);
+    fill(order.begin(), order.end(), -1); //Initally all -1.
+
+    current_order = 0;
+
+    /*Holds the low link value of each state.
+    The low link value of a state is the smallest low link value in that state's SCC.
+    States with the same low link value belong in the same SCC.*/
+    low_link.clear();
+    low_link.resize(size);
+    fill(low_link.begin(), low_link.end(), -1); //Initally all -1.
+
+    //Whether a state was visited by DFS or not.
+    in_stack.clear();
+    in_stack.resize(size);
+    fill(in_stack.begin(), in_stack.end(), false); //Initally all false.
+
+    //Clear stack used to retrieve states in the same SCC.
+    stk = stack<int>();
+
+    //Clear the array where the output will be stored.
+    scc.clear();
+
+    //For all unvisited states, perform DFS and fill scc.
+    for (int i = 0; i < size; i++) {
+        if (order[i] == -1) {
+            sccSearch(i);
+        }
+    }
+
+    return scc;
+    
+}
+
+void Dfa::sccSearch(int s) {
+
+    //Set traversal order
+    order[s] = current_order ++;
+
+    //Initally the low_link value is the same as the order traversal.
+    low_link[s] = order[s];
+
+    //Add current state to stack
+    stk.push(s);
+    in_stack[s] = true;
+
+    //Expand s.
+    auto sChild = getChildren(s);
+
+    //Only consider one child as both transition lead to the same state.
+    if (sChild.first == sChild.second) {
+        if (order[sChild.first] == -1) {
+            //Recurse over the 'a' child because it has not been traversed. 
+            sccSearch(sChild.first); 
+
+            /*If the low_link value of the 'a' child is smaller than s,
+            update the low_link value of s.*/
+            low_link[s] = min(low_link[sChild.first], low_link[s]);
+
+        } else if (in_stack[sChild.first]) {
+            //The 'a' transition is  back edge and closes off an SCC.
+            low_link[s] = min(order[sChild.first], low_link[s]);
+        }
+        
+    } else {
+        //'a' child
+        if (order[sChild.first] == -1) {
+            //Recurse over the 'a' child because it has not been traversed. 
+            sccSearch(sChild.first); 
+
+            /*If the low_link value of the 'a' child is smaller than s,
+            update the low_link value of s.*/
+            low_link[s] = min(low_link[sChild.first], low_link[s]);
+
+        } else if (in_stack[sChild.first]) {
+            //The 'a' transition is  back edge and closes off an SCC.
+            low_link[s] = min(order[sChild.first], low_link[s]);
+        }
+
+        //'b' child
+        if (order[sChild.second] == -1) {
+            //Recurse over the 'b' child because it has not been traversed. 
+            sccSearch(sChild.second); 
+
+            /*If the low_link value of the 'b' child is smaller than s,
+            update the low_link value of s.*/
+            low_link[s] = min(low_link[sChild.second], low_link[s]);
+
+        } else if (in_stack[sChild.second]) {
+            //The 'b' transition is a back edge and closes off an SCC.
+            low_link[s] = min(order[sChild.second], low_link[s]);
+        }
+        
+    }
+    
+    /*If an SCC has been found, pop all the states
+    until you reach the root state of the SCC.*/
+
+    //Root states of an SCC have their order and low_link value the same.
+    if (order[s] == low_link[s]) {
+        vector<int> current_scc; //Current SCC
+
+        //Repeat until s is found in the stack.
+        while(order[stk.top()] != low_link[stk.top()]) {
+            current_scc.insert(current_scc.begin(),stk.top()); //Add top element to current_scc
+            in_stack[stk.top()] = false; //Update in_stack
+            stk.pop(); //Remove top element.
+        }
+
+        //Add s to current_scc.
+        current_scc.insert(current_scc.begin(),s);
+        in_stack[s] = false;
+        stk.pop();
+
+        scc.push_back(current_scc);
+    }
+
+    
+
+
+    
+
+
+
+
+}

@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <iostream>
+#include <stack>
 #include <cstdint>
 
 using namespace std;
@@ -21,10 +22,11 @@ class Dfa {
         void seed();
         void print();
 
-        int getShortestPath(int start, int end);
-        pair<int, int> getChildren(int state);
         int getDepth();
+        vector<vector<int>> getScc();
         void minimise(bool print = false);
+        pair<int, int> getChildren(int state);
+        int getShortestPath(int start, int end);
         void setMat(vector<vector<int>>& new_mat);
         
         
@@ -32,7 +34,9 @@ class Dfa {
     private:
 
         bool isEqual(vector<vector<int>> x, vector<vector<int>> y);
-
+        void sccSearch(int s);
         vector<vector<int>> mat;
         vector<bool> final;
+
+
 };
