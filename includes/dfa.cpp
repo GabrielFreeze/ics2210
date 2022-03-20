@@ -366,6 +366,7 @@ void Dfa::minimise(bool print) {
 
     //Initalise placeholder variables.
     vector<vector<int>> new_mat(2, vector<int>(npart.size()));
+    vector<bool> new_final(npart.size());
 
     /*Create the new transitions. For every partition in npart,
     consult the original transition of any state within that partition
@@ -383,9 +384,6 @@ void Dfa::minimise(bool print) {
         new_mat[1][i] = ipart[s1Child.second];
     }
     
-    //Update underlying datastructure.
-    setMat(new_mat);
-
     /*The partition containing the original starting state,
     will be the new starting state.*/
     start = ipart[start];
@@ -393,9 +391,14 @@ void Dfa::minimise(bool print) {
     /*Find which partions the original final states where placed in,
     and make the element at that index in new_final true.*/
     for (int i = 0; i < size; i++) {
-        final[ipart[i]] = final[i];
+        new_final[ipart[i]] = final[i];
     }
-    final.resize(npart.size()); //Update size of final vector.
+
+    final = new_final; //Copy over values.
+    
+    
+    //Update underlying datastructure.
+    setMat(new_mat);
 
     return;
 }

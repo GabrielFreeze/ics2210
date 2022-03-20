@@ -1,23 +1,41 @@
 #include <iostream>
+#include <cstring>
+#include <vector>
 #include "includes/dfa.hpp"
 
 int main() {
     Dfa dfa;
     
+    //Creates a random DFA.
     dfa.seed();
-    dfa.print(); 
+    dfa.print();
 
-    // dfa.minimise(true);
-    // dfa.print(); 
+    cout << "Number of States in A: " << dfa.size << "\n";
+    cout << "Depth of A: " << dfa.getDepth() << "\n\n";
+    
+    //Minimise DFA using Hopcroft's Algorithm
+    dfa.minimise(true);
+    dfa.print();
 
+    cout << "Number of States in M: " << dfa.size << "\n";
+    cout << "Depth of M: " << dfa.getDepth() << "\n\n";
+    
+    //Get Vector of Strongly Connected Components
     auto v = dfa.getScc();
+    size_t largest_scc = 0;
+    size_t smallest_scc = dfa.size;
 
-    for (int i = 0; i < v.size(); i++) {
-        cout << "{ ";
-        for (int j = 0; j < v[i].size(); j++) {
-            cout << dfa.id[v[i][j]] <<" ";
-        }
-        cout << "}\n";
-    }
+    //Get size of largest SCC.
+    for (auto w : v) largest_scc = max(largest_scc, w.size()); 
+
+    //Get size of smallest SCC.
+    for (auto w : v) smallest_scc = max(smallest_scc, w.size()); 
+
+
+    cout << "Number of Strongly Connected Components in M: " << v.size() << "\n";
+    cout << "Size of Largest SCC in M: " << v.size() << "\n";
+    cout << "Size of Smallest SCC in M: " << v.size() << "\n";
+
+
 
 }
