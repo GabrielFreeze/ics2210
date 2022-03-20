@@ -48,17 +48,25 @@ void Dfa::seed() {
          /*b:*/{5,2,5,3,5,4}};
          //INDX:0 1 2 3 4 5
 
-        // mat = {
-        //  //NODE:A B C D E F
-        //  /*a:*/{1,5,2,3,5,4},
-        //  /*b:*/{5,4,0,4,5,5}};
-        //  //INDX:0 1 2 3 4 5
+        mat = {
+         //NODE:A B C D E F
+         /*a:*/{1,5,2,3,5,4},
+         /*b:*/{5,4,0,4,5,5}};
+         //INDX:0 1 2 3 4 5
+
+        mat = {
+         //NODE:A B C D E F
+         /*a:*/{1,1,1,4,2,4},
+         /*b:*/{5,5,5,5,3,5}};
+         //INDX:0 1 2 3 4 5
+
 
         // mat = {
         //  //NODE:A B C D E F
-        //  /*a:*/{1,1,1,4,2,4},
-        //  /*b:*/{5,5,5,5,3,5}};
+        //  /*a:*/{1,2,3,4,5,0},
+        //  /*b:*/{0,1,2,3,3,5}};
         //  //INDX:0 1 2 3 4 5
+
 
         start = 0; //A
         final = {0,0,1,0,1,0}; //C & E
@@ -432,7 +440,7 @@ vector<vector<int>> Dfa::getScc() {
 
 void Dfa::sccSearch(int s) {
 
-    //Set traversal order
+    //Set traversal order of current state.
     order[s] = current_order ++;
 
     //Initally the low_link value is the same as the order traversal.
@@ -445,46 +453,56 @@ void Dfa::sccSearch(int s) {
     //Expand s.
     auto sChild = getChildren(s);
 
-    //Only consider one child as both transition lead to the same state.
+    //If both transitions lead to the same state only consider one child.
     if (sChild.first == sChild.second) {
+        
+        //If 'a' child has not been traversed before.
         if (order[sChild.first] == -1) {
-            //Recurse over the 'a' child because it has not been traversed. 
+            //Recurse over the 'a' child
             sccSearch(sChild.first); 
 
             /*If the low_link value of the 'a' child is smaller than s,
             update the low_link value of s.*/
             low_link[s] = min(low_link[sChild.first], low_link[s]);
+        }
 
-        } else if (in_stack[sChild.first]) {
+        //If 'a' child has been traversed and is in the stack.
+        else if (in_stack[sChild.first]) {
             //The 'a' transition is  back edge and closes off an SCC.
             low_link[s] = min(order[sChild.first], low_link[s]);
         }
         
     } else {
-        //'a' child
+
+        //If 'a' child has not been traversed before.
         if (order[sChild.first] == -1) {
-            //Recurse over the 'a' child because it has not been traversed. 
+
+            //Recurse over the 'a' child.
             sccSearch(sChild.first); 
 
             /*If the low_link value of the 'a' child is smaller than s,
             update the low_link value of s.*/
             low_link[s] = min(low_link[sChild.first], low_link[s]);
+        }
 
-        } else if (in_stack[sChild.first]) {
+        //If 'a' child has been traversed and is in the stack.
+        else if (in_stack[sChild.first]) {
             //The 'a' transition is  back edge and closes off an SCC.
             low_link[s] = min(order[sChild.first], low_link[s]);
         }
 
-        //'b' child
+        //If 'b' child has not been traversed before.
         if (order[sChild.second] == -1) {
-            //Recurse over the 'b' child because it has not been traversed. 
+            //Recurse over the 'b' child.
             sccSearch(sChild.second); 
 
             /*If the low_link value of the 'b' child is smaller than s,
             update the low_link value of s.*/
             low_link[s] = min(low_link[sChild.second], low_link[s]);
+        }
 
-        } else if (in_stack[sChild.second]) {
+        //If 'b' child has been traversed and is in the stack.
+        else if (in_stack[sChild.second]) {
             //The 'b' transition is a back edge and closes off an SCC.
             low_link[s] = min(order[sChild.second], low_link[s]);
         }
@@ -499,7 +517,7 @@ void Dfa::sccSearch(int s) {
         vector<int> current_scc; //Current SCC
 
         //Repeat until s is found in the stack.
-        while(order[stk.top()] != low_link[stk.top()]) {
+        while(s != stk.top()) {
             current_scc.insert(current_scc.begin(),stk.top()); //Add top element to current_scc
             in_stack[stk.top()] = false; //Update in_stack
             stk.pop(); //Remove top element.
@@ -512,13 +530,4 @@ void Dfa::sccSearch(int s) {
 
         scc.push_back(current_scc);
     }
-
-    
-
-
-    
-
-
-
-
 }
