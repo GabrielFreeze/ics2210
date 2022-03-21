@@ -35,6 +35,7 @@ class Dfa {
 
         bool isEqual(vector<vector<int>> x, vector<vector<int>> y);
         void sccSearch(int s);
+        
         vector<vector<int>> mat;
         vector<bool> final;
 
