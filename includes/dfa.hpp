@@ -6,8 +6,11 @@
 
 using namespace std;
 
-#define MAX_SIZE 64
-#define MIN_SIZE 16
+#define MAX_SIZE 20
+#define MIN_SIZE 8
+#define STRING_NUM 2500
+
+
 class Dfa {
     public:
         
@@ -28,16 +31,20 @@ class Dfa {
         pair<int, int> getChildren(int state);
         int getShortestPath(int start, int end);
         void setMat(vector<vector<int>>& new_mat);
+        bool minimiseTest();
         
         
     
     private:
 
+        int word[STRING_NUM] = {0};
+        bool accepted[STRING_NUM];
+
+        vector<bool> final;
         bool isEqual(vector<vector<int>> x, vector<vector<int>> y);
         void sccSearch(int s);
         
         vector<vector<int>> mat;
-        vector<bool> final;
 
 
 };

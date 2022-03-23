@@ -12,6 +12,8 @@ using namespace std;
 
 #define TEST 0
 
+
+
 //Used to find SCCs.
 stack<int> stk;
 int current_order;
@@ -25,7 +27,7 @@ Dfa::Dfa() {
     srand(time(NULL));                             //Seed random number generator with time.
 
     if (TEST) {
-        size = 6;
+        size = 12;
     } else {
         size = rand() % (MAX_SIZE-MIN_SIZE) + MIN_SIZE;  //Generate random number between 16 and 64.
     }
@@ -55,12 +57,14 @@ void Dfa::seed() {
          //INDX:0 1 2 3 4 5
 
         mat = {
-         //NODE:A B C D E F
-         /*a:*/{1,1,1,4,2,4},
-         /*b:*/{5,5,5,5,3,5}};
-         //INDX:0 1 2 3 4 5
+         //NODE:A B C D E F G  H I J  K  L
+         /*a:*/{5,9,2,8,0,0,11,7,2,1, 1, 1,},
+         /*b:*/{1,5,4,9,5,0,5 ,1,3,9, 6, 3,}};
+         //INDX:0 1 2 3 4 5 6  7 8 9 10 11
 
 
+
+        
         // mat = {
         //  //NODE:A B C D E F
         //  /*a:*/{1,2,3,4,5,0},
@@ -68,8 +72,8 @@ void Dfa::seed() {
         //  //INDX:0 1 2 3 4 5
 
 
-        start = 0; //A
-        final = {0,0,1,0,1,0}; //C & E
+        start = 0;
+        final = {1,1,1,1,1,0,1,0,1,0,1,0,1}; 
 
     } else {
         //Give all states 2 outgoing transitions (a,b) to any other state.
@@ -91,8 +95,33 @@ void Dfa::seed() {
                 final.push_back(rand()%2);
             }
     }     
-}
 
+    int length = sizeof(word[0])*8;
+
+    //Gernerate testing strings
+    for (int i = 0; i < STRING_NUM; i++) {
+        
+        //Generate random string, represented as a bit stream. 0 -> a, 1-> b
+        int current_state = start;
+        int t;
+        for (int j = 0; j < length; j++) {
+            
+            //Choose 'a' or 'b' transition.
+            t = rand() % 2;
+
+            //Save generated string
+            word[i] |= t << j;
+
+            //Move to the next state.
+            current_state = mat[t][current_state];
+        }
+        //Was the generated string accepted?
+        accepted[i] = final[current_state];
+    }
+    
+
+
+}
 
 void Dfa::print() {
     cout << "DFA |\ta\tb\n----+------------\n";
@@ -106,7 +135,7 @@ void Dfa::print() {
         }
         cout << id[mat[0][i]] << "\t" << id[mat[1][i]] << "\n";
     }
-    cout << "\n";
+    cout << "Start -> " << id[start] << '\n';
 }
 
 pair<int, int> Dfa::getChildren(int state) {
@@ -149,7 +178,6 @@ int Dfa::getShortestPath(int start, int end) {
     
     return depth;
 }
-
 
 bool Dfa::isEqual(vector<vector<int>> x, vector<vector<int>> y) {  
     if (x.size() != y.size())
@@ -223,7 +251,10 @@ int Dfa::getDepth() {
 //HopCroft's Minimisation Algorithm
 void Dfa::minimise(bool print) {
     
-    //TODO: Implement headguard that does not go through the algo if all states are accepting/non-accepting.
+    //If all states are accepting/non-acceptting, then the minimsation algorithm won't change anything.
+    if (*max_element(begin(final), end(final)) == *min_element(begin(final), end(final))) {
+        return;
+    }
 
     vector<vector<int>> npart = {};      //Next Partitions.
     vector<vector<int>> ppart = {{},{}}; //Previous Partitions.
@@ -269,8 +300,8 @@ void Dfa::minimise(bool print) {
 
             //In which partition does s1 & s2 belong to?
             //For every transition x ∈ {a,b}: t(x,s1) & t(x,s2), must either be the same, or belong in the same partition in ppart.
-            if ((s1Child.first  == s2Child.first  || ipart[s1Child.first]  == ipart[s2Child.first] ) &&
-                (s1Child.second == s2Child.second || ipart[s1Child.second] == ipart[s2Child.second])) {
+            if ((ipart[s1Child.first]  == ipart[s2Child.first] ) &&
+                (ipart[s1Child.second] == ipart[s2Child.second])) {
                     
                 //s1 & s2 belong in the same partition.
                 npart.push_back({s1,s2});
@@ -300,8 +331,8 @@ void Dfa::minimise(bool print) {
                     s2Child = getChildren(s2);
 
                     //Does s1 belong in the same partition as s2?
-                    if ((s1Child.first  == s2Child.first  || ipart[s1Child.first]  == ipart[s2Child.first] ) &&
-                        (s1Child.second == s2Child.second || ipart[s1Child.second] == ipart[s2Child.second])) {
+                    if ((ipart[s1Child.first]  == ipart[s2Child.first] ) &&
+                        (ipart[s1Child.second] == ipart[s2Child.second])) {
                             
                         //s1 & s2 belong in the same partition.
                         npart[k].push_back(s1); //Add s1 in the same partition as s2.
@@ -533,4 +564,38 @@ void Dfa::sccSearch(int s) {
 
         scc.push_back(current_scc);
     }
+}
+
+bool Dfa::minimiseTest() {
+
+    //Pass previously generated testing strings to the DFA.
+    int length = sizeof(word[0])*8;
+    
+    for (int i = 0; i < STRING_NUM; i++) {
+        
+        int current_state = start;
+        int current_transition = word[i];
+
+        for (int j = 0; j < length; j++) {
+            current_state = mat[(current_transition) & 1][current_state];
+            current_transition >>= 1;
+        }
+
+        //Strings was not supposed to be accepted/rejected.
+        if (accepted[i] != final[current_state]) {
+            cout << "Error on string " << i << " :";
+
+            for (int j = 0; j < length; j++) {
+                cout << "ab"[(word[i]>>j) & 1];
+            }
+            cout << '\n';
+
+            cout << "Expected: " << accepted[i] << " Actual: " << final[current_state] << '\n';
+            return false;
+        }
+    }
+
+    //All strings were accepted.
+    return true;
+
 }

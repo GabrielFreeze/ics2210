@@ -8,14 +8,20 @@ int main() {
     
     //Creates a random DFA.
     dfa.seed();
+    // dfa.print();
 
     cout << "Number of States in A: " << dfa.size << "\n";
     cout << "Depth of A: " << dfa.getDepth() << "\n\n";
     
     //Minimise DFA using Hopcroft's Algorithm
-    dfa.minimise();
+    dfa.minimise(true);
+    // dfa.print();
 
-    cout << "Number of States in M: " << dfa.size << "\n";
+    if (dfa.minimiseTest())
+        cout << "Minimsation Successful.\n";
+    else cout << "Minimsation Failed.\n";
+
+    cout << "\nNumber of States in M: " << dfa.size << "\n";
     cout << "Depth of M: " << dfa.getDepth() << "\n\n";
     
     //Get Vector of Strongly Connected Components
