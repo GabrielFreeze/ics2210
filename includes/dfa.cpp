@@ -12,8 +12,6 @@ using namespace std;
 
 #define TEST 0
 
-
-
 //Used to find SCCs.
 stack<int> stk;
 int current_order;
@@ -27,7 +25,7 @@ Dfa::Dfa() {
     srand(time(NULL));                             //Seed random number generator with time.
 
     if (TEST) {
-        size = 12;
+        size = 10;
     } else {
         size = rand() % (MAX_SIZE-MIN_SIZE) + MIN_SIZE;  //Generate random number between 16 and 64.
     }
@@ -57,12 +55,10 @@ void Dfa::seed() {
          //INDX:0 1 2 3 4 5
 
         mat = {
-         //NODE:A B C D E F G  H I J  K  L
-         /*a:*/{5,9,2,8,0,0,11,7,2,1, 1, 1,},
-         /*b:*/{1,5,4,9,5,0,5 ,1,3,9, 6, 3,}};
-         //INDX:0 1 2 3 4 5 6  7 8 9 10 11
-
-
+         //NODE:A B C D E F G H I J
+         /*a:*/{9,6,4,9,5,6,3,6,4,5},
+         /*b:*/{0,1,9,5,7,8,5,1,6,3}};
+         //INDX:0 1 2 3 4 5 6 7 8 9
 
         
         // mat = {
@@ -72,8 +68,8 @@ void Dfa::seed() {
         //  //INDX:0 1 2 3 4 5
 
 
-        start = 0;
-        final = {1,1,1,1,1,0,1,0,1,0,1,0,1}; 
+        start = 1;
+        final = {1,0,1,0,1,1,1,0,0,1}; 
 
     } else {
         //Give all states 2 outgoing transitions (a,b) to any other state.
@@ -103,7 +99,7 @@ void Dfa::seed() {
         
         //Generate random string, represented as a bit stream. 0 -> a, 1-> b
         int current_state = start;
-        int t;
+        long t;
         for (int j = 0; j < length; j++) {
             
             //Choose 'a' or 'b' transition.
@@ -118,8 +114,6 @@ void Dfa::seed() {
         //Was the generated string accepted?
         accepted[i] = final[current_state];
     }
-    
-
 
 }
 
@@ -232,7 +226,7 @@ int Dfa::getDepth() {
         //Place that element's children in the queue and tally their depth, provided they have not been encountered yet.
         if (depth[p.first] == -1) {
             q.push(p.first);
-            depth[p.first] = current_depth;             
+            depth[p.first] = current_depth;
         }
 
         if (depth[p.second] == -1) {
@@ -264,7 +258,7 @@ void Dfa::minimise(bool print) {
     int eqv = 0;
     pair<int,int> s1Child, s2Child;
     bool partioned = false;
-    bool start = true;
+    bool first_iteration = true;
     
     //Seperate accepting and non-accepting states.
     for (int i = 0; i < size; i++) {
@@ -274,10 +268,10 @@ void Dfa::minimise(bool print) {
     
     do {
         //Do not swap partitions in the first iteration.
-        if (!start) {
+        if (!first_iteration) {
             ppart = npart; //Previous Partions become Next Partitions.
             npart.clear(); //Next Partions are reset.
-        } else start = false;
+        } else first_iteration = false;
 
         //For every partition i in ppart.
         for (int i = 0; i < ppart.size(); i++) {
@@ -300,8 +294,8 @@ void Dfa::minimise(bool print) {
 
             //In which partition does s1 & s2 belong to?
             //For every transition x ∈ {a,b}: t(x,s1) & t(x,s2), must either be the same, or belong in the same partition in ppart.
-            if ((ipart[s1Child.first]  == ipart[s2Child.first] ) &&
-                (ipart[s1Child.second] == ipart[s2Child.second])) {
+            if ((s1Child.first  == s2Child.first  || ipart[s1Child.first]  == ipart[s2Child.first]) &&
+                (s1Child.second == s2Child.second || ipart[s1Child.second] == ipart[s2Child.second])) {
                     
                 //s1 & s2 belong in the same partition.
                 npart.push_back({s1,s2});
@@ -331,8 +325,8 @@ void Dfa::minimise(bool print) {
                     s2Child = getChildren(s2);
 
                     //Does s1 belong in the same partition as s2?
-                    if ((ipart[s1Child.first]  == ipart[s2Child.first] ) &&
-                        (ipart[s1Child.second] == ipart[s2Child.second])) {
+                    if ((s1Child.first  == s2Child.first  || ipart[s1Child.first]  == ipart[s2Child.first]) &&
+                        (s1Child.second == s2Child.second || ipart[s1Child.second] == ipart[s2Child.second])) {
                             
                         //s1 & s2 belong in the same partition.
                         npart[k].push_back(s1); //Add s1 in the same partition as s2.
@@ -574,7 +568,7 @@ bool Dfa::minimiseTest() {
     for (int i = 0; i < STRING_NUM; i++) {
         
         int current_state = start;
-        int current_transition = word[i];
+        unsigned long long current_transition = word[i];
 
         for (int j = 0; j < length; j++) {
             current_state = mat[(current_transition) & 1][current_state];

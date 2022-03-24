@@ -6,10 +6,9 @@
 
 using namespace std;
 
-#define MAX_SIZE 20
-#define MIN_SIZE 8
-#define STRING_NUM 2500
-
+#define MAX_SIZE 64
+#define MIN_SIZE 16
+#define STRING_NUM 100000
 
 class Dfa {
     public:
@@ -37,7 +36,7 @@ class Dfa {
     
     private:
 
-        int word[STRING_NUM] = {0};
+        long word[STRING_NUM] = {0};
         bool accepted[STRING_NUM];
 
         vector<bool> final;

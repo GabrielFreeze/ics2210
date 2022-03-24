@@ -14,7 +14,7 @@ int main() {
     cout << "Depth of A: " << dfa.getDepth() << "\n\n";
     
     //Minimise DFA using Hopcroft's Algorithm
-    dfa.minimise(true);
+    dfa.minimise();
     // dfa.print();
 
     if (dfa.minimiseTest())
