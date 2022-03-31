@@ -35,7 +35,7 @@ class Dfa {
         void setMat(vector<vector<int>>& new_mat);
 
         void minimise(bool print = false);
-        bool minimiseTest();
+        bool test();
         void optimise();
 
         int addState(int a, int b, bool is_final);

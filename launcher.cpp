@@ -8,16 +8,22 @@ int main() {
     
     //Creates a random DFA.
     dfa.seed();
-    // dfa.print();
 
     cout << "Number of States in A: " << dfa.size << "\n";
     cout << "Depth of A: " << dfa.getDepth() << "\n\n";
     
+    //Remove unreachable and dead states.
+    dfa.optimise();
+    
+    if (dfa.test())
+        cout << "Optimisation Successful.\n";
+    else cout << "Optimisation Failed.\n";
+
     //Minimise DFA using Hopcroft's Algorithm
     dfa.minimise();
-    // dfa.print();
+    
 
-    if (dfa.minimiseTest())
+    if (dfa.test())
         cout << "Minimsation Successful.\n";
     else cout << "Minimsation Failed.\n";
 

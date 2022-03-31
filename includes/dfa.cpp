@@ -251,7 +251,6 @@ int Dfa::getDepth() {
     return current_depth-1;
 }
 
-
 vector<int> Dfa::BFS(int starting_vertex) {
     //Queue to perform BFS with.
     queue<int> q;
@@ -302,7 +301,6 @@ vector<int> Dfa::BFS(int starting_vertex) {
     
 }
 
-
 vector<int> Dfa::getUnreachable() {
    
    auto visited = BFS(start);
@@ -315,6 +313,7 @@ vector<int> Dfa::getUnreachable() {
    return unreachable;
 
 }
+
 vector<int> Dfa::getDead() {
 
     //To store dead nodes.
@@ -356,7 +355,6 @@ int Dfa::addState(int a, int b, bool is_final) {
 
     return new_state;
 }
-
 
 void Dfa::optimise() {
 
@@ -448,16 +446,9 @@ void Dfa::optimise() {
 
 }
 
-
-
 //HopCroft's Minimisation Algorithm
 void Dfa::minimise(bool print) {
     
-
-
-
-
-
     //If all states are accepting/non-acceptting, then the minimsation algorithm won't change anything.
     if (*max_element(begin(final), end(final)) == *min_element(begin(final), end(final))) {
         return;
@@ -772,7 +763,7 @@ void Dfa::sccSearch(int s) {
     }
 }
 
-bool Dfa::minimiseTest() {
+bool Dfa::test() {
 
     //Pass previously generated testing strings to the DFA.
     int length = sizeof(word[0])*8;
