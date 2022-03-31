@@ -6,8 +6,8 @@
 
 using namespace std;
 
-#define MAX_SIZE 64
-#define MIN_SIZE 16
+#define MAX_SIZE 5
+#define MIN_SIZE 6
 #define STRING_NUM 100000
 
 class Dfa {
@@ -25,13 +25,22 @@ class Dfa {
         void print();
 
         int getDepth();
+        vector<int> BFS(int starting_vertex);
         vector<vector<int>> getScc();
-        void minimise(bool print = false);
+        vector<int> getUnreachable();
+        vector<int> getDead();
+
         pair<int, int> getChildren(int state);
         int getShortestPath(int start, int end);
         void setMat(vector<vector<int>>& new_mat);
+
+        void minimise(bool print = false);
         bool minimiseTest();
-        
+        void optimise();
+
+        int addState(int a, int b, bool is_final);
+
+
         
     
     private:

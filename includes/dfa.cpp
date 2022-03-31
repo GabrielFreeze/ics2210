@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <cstring>
 #include <stack>
+#include <cassert>
 
 using namespace std;
 
@@ -25,7 +26,7 @@ Dfa::Dfa() {
     srand(time(NULL));                             //Seed random number generator with time.
 
     if (TEST) {
-        size = 10;
+        size = 6;
     } else {
         size = rand() % (MAX_SIZE-MIN_SIZE) + MIN_SIZE;  //Generate random number between 16 and 64.
     }
@@ -60,16 +61,24 @@ void Dfa::seed() {
          /*b:*/{0,1,9,5,7,8,5,1,6,3}};
          //INDX:0 1 2 3 4 5 6 7 8 9
 
-        
+        //Dead statees test
+        mat = {
+         //NODE:A B C D E F
+         /*a:*/{1,3,2,5,4,2},
+         /*b:*/{5,2,2,4,4,5}};
+         //INDX:0 1 2 3 4 5
+
+
         // mat = {
         //  //NODE:A B C D E F
-        //  /*a:*/{1,2,3,4,5,0},
-        //  /*b:*/{0,1,2,3,3,5}};
+        //  /*a:*/{3,3,2,2,1,5},
+        //  /*b:*/{0,4,0,2,4,5}};
         //  //INDX:0 1 2 3 4 5
+        
 
+        start = 0;
+        final = {0,0,0,0,1,0}; 
 
-        start = 1;
-        final = {1,0,1,0,1,1,1,0,0,1}; 
 
     } else {
         //Give all states 2 outgoing transitions (a,b) to any other state.
@@ -242,9 +251,211 @@ int Dfa::getDepth() {
     return current_depth-1;
 }
 
+
+vector<int> Dfa::BFS(int starting_vertex) {
+    //Queue to perform BFS with.
+    queue<int> q;
+
+    //Pair to store children of node.
+    pair<int, int> p;
+
+    //Stores which vertices have been visited.
+    vector<int> visited(size, 0);
+
+    /*Marker is a dummy element. It is popped and re-queued into the queue every time it is encountered.
+    It is used to keep track of the depth.*/
+    const int MARKER = -1;
+
+
+    //Push starting state and MARKER into queue.
+    q.push(starting_vertex); q.push(MARKER);
+    visited[starting_vertex] = true;
+
+    //Repeat until the queue is 'empty' (all traversable nodes have been reached)
+    while (q.size() != 1 || q.front() != MARKER) {
+        
+        //Increment depth if MARKER is encountered.
+        if (q.front() == MARKER) {
+            q.pop();
+            q.push(MARKER);
+        }
+
+        //Expand the first element in the queue.
+        p = getChildren(q.front());
+        
+        //Remove that element from queue.
+        q.pop();
+
+        //Place that element's children in the queue and mark as visited, provided they have not been encountered yet.
+        if (!visited[p.first]) {
+            q.push(p.first);
+            visited[p.first] = true;
+        }
+
+        if (!visited[p.second]) {
+            q.push(p.second);
+            visited[p.second] = true; 
+        }
+    }
+    
+    return visited;
+    
+}
+
+
+vector<int> Dfa::getUnreachable() {
+   
+   auto visited = BFS(start);
+   vector<int> unreachable;
+
+   for (int i = 0; i < visited.size(); i++) {
+        if (!visited[i]) unreachable.push_back(i);
+   }
+
+   return unreachable;
+
+}
+vector<int> Dfa::getDead() {
+
+    //To store dead nodes.
+    vector<int> dead;
+
+    //Perform BFS on every node and determine if it is dead or not.
+    for (int i = 0; i < size; i++) {
+
+        auto visited = BFS(i);
+        bool alive = false;
+
+
+        for (int j = 0; j < size; j++)
+            alive |= visited[j] && final[j];
+        
+
+        if (!alive)
+            dead.push_back(i);
+    }
+
+    return dead;
+
+}
+
+int Dfa::addState(int a, int b, bool is_final) {
+
+    int new_state = size;
+
+    assert((0 <= a && a < size+1 && 0 <= b && b < size+1) && 
+           "Invalid transition supplied in addState");
+
+
+    mat[0].push_back(a);
+    mat[1].push_back(b);
+
+    final.push_back(is_final);
+
+    size++;
+
+    return new_state;
+}
+
+
+void Dfa::optimise() {
+
+    //Get all unreachable and dead nodes which are unique to each other and store them in vertices.    
+    auto vertices = getUnreachable();
+    auto dead = getDead();
+
+    for (auto d : dead) {
+        if (find(vertices.begin(), vertices.end(), d) == vertices.end())
+            vertices.push_back(d);
+    }
+
+    //Add dummy state to keep DFA complete.
+    int dummy = size;
+    addState(dummy,dummy,false);
+
+    /*If the starting state is in vertices it implies it is a dead state.
+     (We know that the starting state is not unreachable)
+     If the starting state is a dead state then it implies the language recognised by the automaton is Ø.
+     We know that the simplest DFA that recognises Ø is one with no states.*/
+    if (find(vertices.begin(), vertices.end(), start) != vertices.end()) {
+        vector<vector<int>> empty_mat;
+        setMat(empty_mat);
+        
+    }
+
+    //vertices -> the vertices to remove
+
+    //For all vertices to removee
+    for (int i = 0; i < vertices.size(); i++) {
+
+        int v = vertices[i];
+
+        //Remove element
+        mat[0].erase(mat[0].begin()+v);
+        mat[1].erase(mat[1].begin()+v);
+        final.erase(final.begin()+v);
+        size--;
+
+        if(start > v) {
+            start --;
+        }
+
+        //Update all transitions
+        for (int j = 0; j < size; j++) {
+            for (int k : {0,1}) {
+                
+
+                if (mat[k][j] > v) {
+                    mat[k][j]--;
+                }
+                else if(mat[k][j] == v)
+                    mat[k][j] = mat[0][size-1]-1;
+
+            }
+        }
+        
+        //Update vertices index.
+        for (int j = i; j < vertices.size(); j++) {
+            if (vertices[j] > v)
+                vertices[j]--;
+        }
+
+
+    }
+
+
+    //If dummy state is used, return.
+    for (int i = 0; i < size-1; i++) {
+        for (auto j : {0,1}) {
+            if (mat[j][i] == mat[0][size-1])
+                return;
+        }
+    }
+
+
+    //Otherwise remove dummy state.
+    mat[0].pop_back();
+    mat[1].pop_back();
+    final.pop_back();
+    size --;
+
+    return;
+
+
+
+
+}
+
+
+
 //HopCroft's Minimisation Algorithm
 void Dfa::minimise(bool print) {
     
+
+
+
+
+
     //If all states are accepting/non-acceptting, then the minimsation algorithm won't change anything.
     if (*max_element(begin(final), end(final)) == *min_element(begin(final), end(final))) {
         return;
@@ -375,7 +586,6 @@ void Dfa::minimise(bool print) {
 
         cout << eqv << "-Equivalence:\n";
         for (int i = 0; i < npart.size(); i++) {
-            
             cout << "{ ";
             for (int j = 0; j < npart[i].size(); j++) {
                 cout << id[npart[i][j]] << " ";
