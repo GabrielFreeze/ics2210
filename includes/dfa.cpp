@@ -378,9 +378,11 @@ void Dfa::optimise() {
      If the starting state is a dead state then it implies the language recognised by the automaton is Ø.
      We know that the simplest DFA that recognises Ø is one with no states.*/
     if (find(vertices.begin(), vertices.end(), start) != vertices.end()) {
-        vector<vector<int>> empty_mat;
+        vector<vector<int>> empty_mat = {{0},{0}};
         setMat(empty_mat);
-        
+        final = vector<bool>(1,0);
+        start = 0;
+        return;
     }
 
     //vertices -> the vertices to remove

@@ -6,8 +6,8 @@
 
 using namespace std;
 
-#define MAX_SIZE 5
-#define MIN_SIZE 6
+#define MIN_SIZE 16
+#define MAX_SIZE 64
 #define STRING_NUM 100000
 
 class Dfa {
